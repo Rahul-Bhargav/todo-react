@@ -1,0 +1,1 @@
+This is an implementation of the Todo MVC application using React and Restful API built on Node.js and PostGRES

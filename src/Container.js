@@ -15,6 +15,14 @@ export default class Container extends React.Component {
     }
   }
 
+  clearCompleted () {
+    apiInterface.deleteCompleted()
+      .then(() => {
+        const updatedTodos = this.listType['Active']()
+        this.setState({ todos: updatedTodos })
+      })
+  }
+
   onToggleAll (status) {
     apiInterface.updateAll(status)
       .then(() => {
@@ -54,25 +62,24 @@ export default class Container extends React.Component {
       })
   }
 
+  updateTodoArray (todoArray, newTodo) {
+    return todoArray.map(item => {
+      if (item.id === newTodo.id) {
+        item = newTodo
+      }
+      return item
+    })
+  }
+
   onTodoUpdate (oldTodo, newTodo) {
     // spread here
     apiInterface.updateTask(newTodo.id, newTodo.description, newTodo.status)
       .then(() => {
-        const updatedTodos = this.state.todos.map(item => {
-          if (item.id === newTodo.id) {
-            item = newTodo
-          }
-          return item
-        })
+        const updatedTodos = this.updateTodoArray(this.state.todos, newTodo)
         this.setState({ todos: updatedTodos })
       })
       .catch((err) => {
-        const updatedTodos = this.state.todos.map(item => {
-          if (item.id === oldTodo.id) {
-            item = oldTodo
-          }
-          return item
-        })
+        const updatedTodos = this.updateTodoArray(this.state.todos, oldTodo)
         this.setState({ todos: updatedTodos })
         console.log(err)
       })
@@ -113,6 +120,7 @@ export default class Container extends React.Component {
         />
         <Footer
           todoCount={count}
+          clearCompleted={this.clearCompleted.bind(this)}
           showFooter={this.state.showElements}
         />
       </section>

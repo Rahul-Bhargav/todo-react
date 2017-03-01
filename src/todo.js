@@ -7,7 +7,7 @@ export default class Todo extends React.Component {
     this.state = { isEditing: false }
   }
 
-  onStatusChange (e) {
+  onStatusChange () {
     this.props.onTodoUpdate(this.props.todo, { id: this.props.todo.id, status: !this.props.todo.status, description: this.props.todo.description })
   }
 

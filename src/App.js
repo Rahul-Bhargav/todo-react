@@ -7,7 +7,7 @@ const App = (props) => {
       <header>
         <h1>todos</h1>
       </header>
-      <Container />
+      <Container params={props.params}/>
       <footer className="info">
         <p>Double-click to edit a todo</p>
         <p>Created by TodoMVC</p>

@@ -7,14 +7,114 @@ import apiInterface from './apiInterface'
 export default class Container extends React.Component {
   constructor (props) {
     super(props)
-    this.state = {}
+    this.state = { todos: [], showElements: false, currentLocation: '' }
+    this.listType = {
+      'All': () => this.state.todos,
+      'Completed': () => this.state.todos.filter(todo => todo.status),
+      'Active': () => this.state.todos.filter(todo => !todo.status)
+    }
   }
+
+  onToggleAll (status) {
+    apiInterface.updateAll(status)
+      .then(() => {
+        const updatedTodos = this.state.todos.map(todo => {
+          todo.status = status
+          return todo
+        })
+        this.setState({ todos: updatedTodos })
+      })
+  }
+  onInsertTodo (description) {
+    apiInterface.insertTask(description)
+      .then((response) => {
+        return response.json()
+      })
+      .then((result) => {
+        const newTodo = { id: result[0].id, description, status: false }
+        const updatedTodos = this.state.todos
+        updatedTodos.push(newTodo)
+        this.setState({ todos: updatedTodos })
+        this.setShowElements()
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
+
+  onTodoDelete (id) {
+    apiInterface.deleteTask(id)
+      .then(() => {
+        const updatedTodos = this.state.todos.filter(todo => !(todo.id === id))
+        this.setState({ todos: updatedTodos })
+        this.setShowElements()
+      })
+      .catch((err) => {
+        console.log(err)
+      })
+  }
+
+  onTodoUpdate (oldTodo, newTodo) {
+    // spread here
+    apiInterface.updateTask(newTodo.id, newTodo.description, newTodo.status)
+      .then(() => {
+        const updatedTodos = this.state.todos.map(item => {
+          if (item.id === newTodo.id) {
+            item = newTodo
+          }
+          return item
+        })
+        this.setState({ todos: updatedTodos })
+      })
+      .catch((err) => {
+        const updatedTodos = this.state.todos.map(item => {
+          if (item.id === oldTodo.id) {
+            item = oldTodo
+          }
+          return item
+        })
+        this.setState({ todos: updatedTodos })
+        console.log(err)
+      })
+  }
+
+  setShowElements () {
+    if (this.state.todos.length > 0) {
+      if (!this.state.showElements) {
+        this.setState({ showElements: true })
+      }
+    }
+    if (this.state.todos.length <= 0) {
+      if (this.state.showElements) {
+        this.setState({ showElements: false })
+      }
+    }
+  }
+
+  getCompletedTodoCount () {
+    return this.state.todos.filter(todo => !todo.status).length
+  }
+
   render () {
+    let location = this.props.params.location === undefined ? 'All' : this.props.params.location
+    const todoToShow = this.listType[location]()
+    const count = this.getCompletedTodoCount()
     return (
       <section className="todoapp">
-        <Header />
-        <TodoList todos={this.state.todos}/>
-        <Footer />
+        <Header
+          onInsertTodo={this.onInsertTodo.bind(this)}
+          showCheckAll={this.state.showElements}
+          onToggleAll={this.onToggleAll.bind(this)}
+        />
+        <TodoList
+          todos={todoToShow}
+          onTodoUpdate={this.onTodoUpdate.bind(this)}
+          onTodoDelete={this.onTodoDelete.bind(this)}
+        />
+        <Footer
+          todoCount={count}
+          showFooter={this.state.showElements}
+        />
       </section>
     )
   }
@@ -26,6 +126,7 @@ export default class Container extends React.Component {
       })
       .then((result) => {
         this.setState({ todos: result })
+        this.setShowElements()
       })
       .catch((err) => {
         console.log(err)
